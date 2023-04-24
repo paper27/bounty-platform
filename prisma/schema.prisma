@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+    // Further reading:
+    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+    url      = env("DATABASE_URL")
+}
+
+model Bounty {
+    address      String   @db.Char(42)
+    nonce        Int      @db.UnsignedInt // only positive integers
+    // bountyOpenedAt DateTime @db.DateTime // TODO: add timestamp created to blockchain? - can add if gas spent not too high !! // TODO: make this the timestamp at which the `openBounty` function was executed on the blockchain
+    title        String   @db.VarChar(200)
+    details      String   @db.Text // max char count: 65,535
+    createdAt    DateTime @default(now())
+    durationHold Int      @db.UnsignedInt // TODO: tmp, remove once using subgraph
+    durationFlow Int      @db.UnsignedInt // TODO: tmp, remove once using subgraph
+
+    @@unique([address, nonce])
+    @@index([address, nonce])
+}
+
+// access patterns (queries) of Bounty table
+// 1. select address, nonce from Bounty where [get row for infinite scroll] sortBy createdAt - sorting is optional
+// 2. select address, nonce from Bounty where address = "0x.." sortBy createdAt - to preview list of bounties in "My Profile"/"Other Profile" page
+// 3. select address, nonce, details from Bounty where address = "0x..." and nonce = [specific] - to display in specific bounty details page
+
+// MySQL Video Ref: https://planetscale.com/courses/mysql-for-developers/schema/unexpected-types?autoplay=1
+
+// put index on columns with HIGH selectivity
+// selectivity is num_unique_row_of_column/total_num_rows_of_table
+// so for ref, primary key is always highest selectivity at 1
